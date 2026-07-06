@@ -117,6 +117,14 @@ class MpcPinocchioIK:
         self._last_plan = None
         # 从 Pinocchio/URDF 提取运动链,生成 CasADi 符号 FK,供 acados 代码生成使用。
         self._symbolic_fk = _CasadiFkFromPinocchio(self.model, self.frame_id, self.urdf_path)
+        # 启用避障时先校验避障参考 URDF 有效,避免空/非法路径落到底层解析器报出误导性错误。
+        if self.config.obstacle_avoidance_enabled:
+            _urdf = str(self.config.obstacle_ll100_urdf_path).strip()
+            if not _urdf or not Path(_urdf).expanduser().is_file():
+                raise ValueError(
+                    "obstacle_avoidance_enabled=True 需要 obstacle_ll100_urdf_path 指向真实存在的避障参考 "
+                    f"URDF 文件,当前为 {self.config.obstacle_ll100_urdf_path!r}"
+                )
         # 避障恒为硬约束,由 acados 复用同一组 CasADi 符号 margin 函数。
         self._obstacle_keypoint_frame_ids = (
             self._resolve_obstacle_keypoint_frames()
@@ -127,6 +135,18 @@ class MpcPinocchioIK:
         self._body_obstacle_boxes = self._resolve_body_obstacle_boxes()
         self._capsule_frame_ids = self._resolve_capsule_frames()
         self._capsule_points = self._resolve_capsule_points()
+        # 启用避障却没配出任何约束(几何为空,或与参考 URDF 不匹配),是配置遗漏;
+        # 明确报错,避免"以为在避障、其实约束为空、机械臂直穿障碍"的静默失效。
+        if self.config.obstacle_avoidance_enabled:
+            n_obstacle_constraints = (
+                self._front_obstacle_constraint_count() + self._body_obstacle_constraint_count()
+            )
+            if n_obstacle_constraints == 0:
+                raise ValueError(
+                    "obstacle_avoidance_enabled=True 但未生成任何避障约束;请检查避障几何是否已按机型提供"
+                    "(obstacle_front_propeller_joints / obstacle_keypoint_frames / capsule_points / "
+                    "body_obstacle_boxes 至少一项需非空,且能与参考 URDF 匹配出约束)"
+                )
         self._acados_solver = None
         self._obstacle_margin_fns = None
         # 最近一次 solve() 的完整诊断(避障 margin/求解耗时/迭代数等),供调用后按需查询。
@@ -150,7 +170,7 @@ class MpcPinocchioIK:
 
         Args:
             target_position: 目标末端位置 (3,),base 坐标系,单位 m;
-                也可传 (n, 3) 给每步一个目标。
+                也可传 (horizon_steps, 3) 给每步一个目标(步数须恰为 horizon_steps)。
             target_rotation: 可选目标姿态 (3,3);None 则只跟踪位置。
             q_init: 当前/初始关节角 (nq,),用于热启动;None 用 neutral 位姿。
 

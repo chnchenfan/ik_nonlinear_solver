@@ -22,7 +22,7 @@ solver = NonlinearPinocchioIK(
 
 | 参数 | 说明 |
 |---|---|
-| `target_position` | 目标末端位置 `(3,)`,base 坐标系,单位 m;也可传 `(n, 3)` 给每步一个目标 |
+| `target_position` | 目标末端位置 `(3,)`,base 坐标系,单位 m;也可传 `(horizon_steps, 3)` 给每步一个目标(步数须恰为 `horizon_steps`,其他形状会报错) |
 | `target_rotation` | 可选目标姿态 `(3,3)` 旋转矩阵;`None` 则只跟踪位置 |
 | `q_init` | 当前/初始关节角 `(nq,)`,用于热启动;`None` 用 neutral 位姿 |
 
@@ -91,5 +91,12 @@ solver = NonlinearPinocchioIK(
 | `obstacle_front_propeller_joints` | 前方障碍(如桨叶)对应关节 |
 | `body_obstacle_enabled` / `body_obstacle_boxes` | 机身盒式障碍 |
 | `capsule_points` / `capsule_*_radii` | 胶囊体采样点与半径(最精确的臂体建模) |
+
+**启用避障的必需条件**(不满足则构造时报错,不会静默生成"零约束"的假避障):
+
+- `obstacle_ll100_urdf_path` 必须指向**真实存在的 URDF 文件**;留空(默认值)会在构造时直接报错。
+- 该参考 URDF 必须包含名为 **`arm_base_Joint`** 的关节(解析避障几何的基准坐标),否则报错。
+- `obstacle_front_propeller_joints` / `obstacle_keypoint_frames`(或 `capsule_points` / `body_obstacle_boxes`)
+  至少一组需**非空**且能与 URDF 匹配出约束;全空时构造会报错。
 
 避障几何的坐标/半径标定与具体机械臂和安装环境相关,需按实际平台配置。

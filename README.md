@@ -31,7 +31,8 @@ pos, rot = solver.forward(q)            # 正运动学验证
 │   └── solver.py       # 求解器与 acados 后端
 ├── models/             # 示例模型(ll100_lh420_nmpc.urdf,纯运动学,无 mesh)
 ├── examples/           # 可运行示例
-│   └── 01_minimal_solve.py
+│   ├── 01_minimal_solve.py
+│   └── 02_trajectory_tracking.py
 ├── docs/
 │   ├── DEPLOY.md       # 依赖安装与环境配置
 │   └── API.md          # 接口详解与配置项

@@ -41,6 +41,8 @@ def main() -> int:
     p, _ = solver.forward(q)
     info = solver.last_info  # 求解耗时/迭代/避障 margin 等详细诊断
 
+    # ok 反映内部预测序列末端是否达标;下面的"到目标距离"是本步命令 q(受 max_joint_step
+    # 单步步长限制)到目标的距离。单次冷启动通常一步走不到位,需多步滚动逼近(见 02 示例的稳态精度)。
     print(f"求解成功={ok}, 求解耗时={info.get('solve_time', float('nan'))*1e3:.2f} ms, 迭代={info.get('nit')}")
     print(f"关节命令 q = {np.round(q, 4)}")
     print(f"命令末端 = {np.round(p, 4)}, 到目标距离 = {np.linalg.norm(p - target)*1e3:.1f} mm")
