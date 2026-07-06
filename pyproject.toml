@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nonlinear-ik-qpoases"
+version = "0.1.0"
+description = "基于 Pinocchio 的末端位置逆解求解器,面向非线性情况(acados + qpOASES)"
+requires-python = ">=3.8"
+dependencies = [
+    "numpy>=1.20",
+    "casadi>=3.6",
+]
+# 注:pinocchio 与 acados(含 acados_template 与编译好的 libacados)需另行安装,见 docs/DEPLOY.md。
+
+[tool.setuptools.packages.find]
+include = ["nonlinear_ik*"]

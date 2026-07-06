@@ -1,0 +1,11 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+
+# 编译产物 / acados 代码生成(默认在 /tmp,以防在本地生成时误提交)
+*.so
+c_generated_code/
+acados_ocp*.json
